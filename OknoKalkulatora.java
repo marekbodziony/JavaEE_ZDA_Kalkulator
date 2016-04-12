@@ -19,6 +19,7 @@ public class OknoKalkulatora extends JFrame {
 	private String aktualnaLiczba = "";
 	private float aktualnyWynik = 0;
 	private boolean czyJuzPoliczono;		// konieczne dla obslugi powtarzania dzialania po wybraniu " = "
+	private boolean czyNoweObliczenia;
 	
 	public OknoKalkulatora(){
 	
@@ -37,6 +38,41 @@ public class OknoKalkulatora extends JFrame {
 		cyfryDzialania.setLayout(new BoxLayout(cyfryDzialania, BoxLayout.LINE_AXIS));
 		cyfry.setLayout(new GridLayout(4,3));
 		dzialania.setLayout(new GridLayout(5,0));
+		
+		
+		JButton znakDodawania = new JButton("+");
+		znakDodawania.addActionListener(new ActionListener(){
+			public void actionPerformed(ActionEvent e){
+				if(aktualnaLiczba.equals("")) return;
+				if (czyJuzPoliczono) {aktualnaLiczba = "0";}
+				poprzedniaLiczba.setLiczba(poprzedniaLiczba.oblicz(Float.parseFloat(aktualnaLiczba)));
+				aktualnaLiczba ="";
+				poprzedniaLiczba.setDzialanie(Mat.Dodawanie);
+				System.out.println(" + ");
+				czyJuzPoliczono = false;
+				znakDodawania.setEnabled(false);
+			}
+		});
+		JButton znakOdejmowania = new JButton("-");
+		JButton znakMnozenia = new JButton("*");
+		JButton znakDzielenia = new JButton("/");
+		JButton znakWyniku = new JButton("=");
+		znakWyniku.addActionListener(new ActionListener(){
+			public void actionPerformed(ActionEvent event){
+				if(aktualnaLiczba.equals("")) { aktualnaLiczba = "0";};
+				aktualnyWynik = poprzedniaLiczba.oblicz(Float.parseFloat(aktualnaLiczba));		
+				poprzedniaLiczba.setLiczba(aktualnyWynik);
+				if (poprzedniaLiczba.getDzialanie() != null) {czyJuzPoliczono = true;}
+				System.out.println("\nWynik = " + aktualnyWynik + "  (poprzed = " + poprzedniaLiczba.getLiczba() + ", aktual = " + aktualnaLiczba +")");
+				znakDodawania.setEnabled(true);
+			}
+		});
+		JButton znakKasuj = new JButton("C");
+		znakKasuj.addActionListener(new ActionListener(){
+			public void actionPerformed(ActionEvent event){
+				aktualnaLiczba ="";
+			}
+		});
 		
 		
 		ActionListener utworzLiczbe = new ActionListener(){
@@ -76,38 +112,7 @@ public class OknoKalkulatora extends JFrame {
 				}
 			}
 		});
-		
-		JButton znakDodawania = new JButton("+");
-		znakDodawania.addActionListener(new ActionListener(){
-			public void actionPerformed(ActionEvent e){
-				if(aktualnaLiczba.equals("")) return;
-				if (czyJuzPoliczono) {aktualnaLiczba = "0";}
-				poprzedniaLiczba.setLiczba(poprzedniaLiczba.oblicz(Float.parseFloat(aktualnaLiczba)));
-				aktualnaLiczba ="";
-				poprzedniaLiczba.setDzialanie(Mat.Dodawanie);
-				System.out.println(" + ");
-				czyJuzPoliczono = false;
-			}
-		});
-		JButton znakOdejmowania = new JButton("-");
-		JButton znakMnozenia = new JButton("*");
-		JButton znakDzielenia = new JButton("/");
-		JButton znakWyniku = new JButton("=");
-		znakWyniku.addActionListener(new ActionListener(){
-			public void actionPerformed(ActionEvent event){
-				if(aktualnaLiczba.equals("")) { aktualnaLiczba = "0";};
-				aktualnyWynik = poprzedniaLiczba.oblicz(Float.parseFloat(aktualnaLiczba));		// 'aktualnyWynik' mozna usunac zmienna!
-				poprzedniaLiczba.setLiczba(aktualnyWynik);
-				if (poprzedniaLiczba.getDzialanie() != null) {czyJuzPoliczono = true;}
-				System.out.println("\nWynik = " + aktualnyWynik + "  (poprzed = " + poprzedniaLiczba.getLiczba() + ", aktual = " + aktualnaLiczba +")");
-			}
-		});
-		JButton znakKasuj = new JButton("C");
-		znakKasuj.addActionListener(new ActionListener(){
-			public void actionPerformed(ActionEvent event){
-				aktualnaLiczba ="";
-			}
-		});
+	
 		
 		JTextField wyswietlaczKalkulatora = new JTextField("0");
 		wyswietlaczKalkulatora.setSize(300, 10);
@@ -134,14 +139,12 @@ public class OknoKalkulatora extends JFrame {
 		dzialania.add(znakDzielenia);
 		dzialania.add(znakWyniku);
 		
-		//this.setLayout(new GridLayout(2,1));
 		this.getContentPane().add(kalkulator);
-		//this.getContentPane().add(cyfry);
-		
 		
 		pack();
 		setVisible(true);
 	
 	}
+	
 
 }
