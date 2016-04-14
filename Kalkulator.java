@@ -9,15 +9,16 @@ public class Kalkulator {
 	}
 	
 	public float oblicz(float liczba2){
-		float wynik = liczba2;
+		float wynik = 999999999999999f;
 		if (dzialanie == Mat.Dodawanie)		{return wynik = dodaj(liczba2);}
 		if (dzialanie == Mat.Odejmowanie) 	{return wynik = odejmij(liczba2);}
 		if (dzialanie == Mat.Mnozenie)		{return wynik = pomnoz(liczba2);}
 		if (dzialanie == Mat.Dzielenie)	{
-			if (liczba2 == 0) {return wynik;}
+			if (liczba2 == 0) {return liczba1;}
 			return wynik = podziel(liczba2);
-			}
-		
+		}
+		if (dzialanie == null) { return wynik = dodaj(liczba2); }	// gdy nie wybrano zadnego dzialania: sumujemy 2 liczby (poprzednia + aktualna), tyle ze jedna z nich 
+																	// zawsze bedzie rowna "0", wiec ich suma zawsze zwroci wartosc tej niezerowej
 		return wynik;
 	}
 	
