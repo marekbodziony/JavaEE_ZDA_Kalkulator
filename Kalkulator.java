@@ -18,7 +18,7 @@ public class Kalkulator {
 			return wynik = podziel(liczba2);
 		}
 		if (dzialanie == null) { return wynik = dodaj(liczba2); }	// gdy nie wybrano zadnego dzialania: sumujemy 2 liczby (poprzednia + aktualna), tyle ze jedna z nich 
-																	// zawsze bedzie rowna "0", wiec ich suma zawsze zwroci wartosc tej niezerowej
+										// zawsze bedzie rowna "0", wiec ich suma zawsze zwroci wartosc tej niezerowej
 		return wynik;
 	}
 	
