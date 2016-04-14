@@ -15,11 +15,12 @@ import kalkulator.Kalkulator.Mat;
 
 public class OknoKalkulatora extends JFrame {
 	
-	private Kalkulator poprzedniaLiczba = new Kalkulator();
+	private Kalkulator poprzedniaLiczba = new Kalkulator();	
 	private String aktualnaLiczba = "0";
 	private float aktualnyWynik = 0;
 	private boolean czyJuzPoliczono;			// do obslugi powtarzania ostatniego dzialania po wybraniu " = "
-	private boolean czyWprowadzicNowaLiczbe;	// informuje, gdy nacisniety zostal znak "=" i chcemy wprowadzac nowa liczbe
+	private boolean czyRozpoczacNoweObliczenia;	// gdy otrzymamy 'wynik' dzialania (nacisniety zostal znak "="), mozemy uzyc 'wyniku' aby kontunuowac obliczenia (wartosc: FALSE) 
+												// albo wprowadzic nowa liczby dla nowych obliczen (wartosc: TRUE)
 	
 	public OknoKalkulatora(){
 	
@@ -39,6 +40,13 @@ public class OknoKalkulatora extends JFrame {
 		cyfry.setLayout(new GridLayout(4,3));
 		dzialania.setLayout(new GridLayout(5,0));
 		
+		// ----- Obsluga wyswietlacza wyniku ----
+		
+		JTextField wyswietlaczKalkulatora = new JTextField(15);
+		wyswietlaczKalkulatora.setHorizontalAlignment(JTextField.RIGHT);
+		wyswietlaczKalkulatora.setText(aktualnaLiczba);		
+		wyswietlaczKalkulatora.setEditable(false);	// nie mozna nic wpisac "recznie" na wyswietlacz kalkulatora (wyswietla on tylko podane liczby lub wynik)
+		
 		// ----- Obsluga przyciskow z dzialaniami ----
 		
 		JButton znakDodawania = new JButton("+");
@@ -47,8 +55,8 @@ public class OknoKalkulatora extends JFrame {
 				poprzedniaLiczba.setDzialanie(Mat.Dodawanie);
 				aktualnyWynik = poprzedniaLiczba.oblicz(Float.parseFloat(aktualnaLiczba));
 				poprzedniaLiczba.setLiczba(aktualnyWynik);
-				aktualnaLiczba = "0";
-				czyWprowadzicNowaLiczbe = false;	// mamy wynik, ale chcemy do niego jeszcze cos dodac (nie skasuj poprzedniej liczby)
+				aktualnaLiczba = "0";				// zeby mozna bylo wpisac nowa liczbe
+				czyRozpoczacNoweObliczenia = false;	// mamy wynik, ale chcemy do niego jeszcze cos dodac (przy wprowadzaniu nowej liczby nie skasuj poprzedniej)
 				System.out.println(" + ");
 			}
 		});
@@ -61,8 +69,9 @@ public class OknoKalkulatora extends JFrame {
 			public void actionPerformed(ActionEvent event){
 				aktualnyWynik = poprzedniaLiczba.oblicz(Float.parseFloat(aktualnaLiczba));
 				poprzedniaLiczba.setLiczba(aktualnyWynik);
-				aktualnaLiczba = "0";			// zeby mozna bylo wpisac nowa liczbe
-				czyWprowadzicNowaLiczbe = true;		// mamy wynik, mozna wykonywac nowe obliczenia (skasuj poprzednia liczbe)
+				aktualnaLiczba = "0";				// zeby mozna bylo wpisac nowa liczbe
+				czyRozpoczacNoweObliczenia = true;		// mamy wynik, mozna wykonywac nowe obliczenia (przy wprowadzaniu nowej liczby skasuj poprzednia z pamieci)
+				wyswietlaczKalkulatora.setText(wyswietlPoprawnieWynikFloat(aktualnyWynik));		// wyswietla aktualny wynik na wyswietlaczu
 				System.out.println("\nWynik = " + aktualnyWynik);
 			}
 		});
@@ -73,6 +82,7 @@ public class OknoKalkulatora extends JFrame {
 				poprzedniaLiczba.setLiczba(0);
 				aktualnyWynik = 0;
 				poprzedniaLiczba.setDzialanie(null);
+				wyswietlaczKalkulatora.setText("0");
 				System.out.println("- clear -");
 			}
 		});
@@ -81,11 +91,14 @@ public class OknoKalkulatora extends JFrame {
 		
 		ActionListener utworzLiczbe = new ActionListener(){
 			public void actionPerformed (ActionEvent event){
-				if (czyWprowadzicNowaLiczbe){
+				if (czyRozpoczacNoweObliczenia){			// beda wykonywane nowe obliczenia (wyczysc poprzednia liczba oraz dzialanie)
 					poprzedniaLiczba.setLiczba(0);
-					czyWprowadzicNowaLiczbe = false;
+					poprzedniaLiczba.setDzialanie(null);
+					czyRozpoczacNoweObliczenia = false;
 				}
 				aktualnaLiczba += event.getActionCommand();
+				aktualnaLiczba = wyswietlPoprawnieLiczbeString(aktualnaLiczba);		// usuwa niepotrzebne "0" z poczatku stringu
+				wyswietlaczKalkulatora.setText(aktualnaLiczba);		// wyswietla wpisywana liczbe na wyswietlaczu kalkulatora
 				System.out.println("a="+aktualnaLiczba+ "  p="+poprzedniaLiczba.getLiczba());
 			}
 		};
@@ -116,16 +129,11 @@ public class OknoKalkulatora extends JFrame {
 			public void actionPerformed(ActionEvent event){
 				if (!aktualnaLiczba.contains(".")){
 					aktualnaLiczba += event.getActionCommand();
-					System.out.print(event.getActionCommand());
+					wyswietlaczKalkulatora.setText((aktualnaLiczba));	// wyswietli aktualna liczbe na wyswietlaczu podczas wpisywania
 				}
 			}
 		});
-	
 		
-		JTextField wyswietlaczKalkulatora = new JTextField("0");
-		wyswietlaczKalkulatora.setSize(300, 10);
-		
-			
 		wyswietlacz.add(wyswietlaczKalkulatora);
 		
 		cyfry.add(cyfra1);
@@ -154,5 +162,26 @@ public class OknoKalkulatora extends JFrame {
 	
 	}
 	
+	// pomocnicza metoda do poprawnego wyswietlania liczby typu String, usuwa niepotrzebne "0" z poczatku stringu (np. 0122.0 -> 122.0, 00000.03 -> 0.03)
+	private String wyswietlPoprawnieLiczbeString (String liczbaString){
+		
+		if (liczbaString.substring(0,1).equals("0") && liczbaString.length() > 1){
+			if (!liczbaString.substring(1,2).equals(".")){
+				liczbaString = liczbaString.substring(1);
+			}
+		}
+		System.out.println(liczbaString);
+		return liczbaString;
+	}
+	// pomocnicza metoda do poprawnego wyswietlania wyniku typu float (dla calkowitych liczba nie wyswietla ".0", np 35.0 -> 35) 
+		private String wyswietlPoprawnieWynikFloat (float wynikFloat){
+			
+			String wynikString = "" + wynikFloat;
+			if (wynikString.substring(wynikString.length()-1).equals("0")){
+				wynikString = wynikString.substring(0, wynikString.length()-2);
+			}
+			System.out.println(wynikString);
+			return wynikString;
+		}
 
 }
