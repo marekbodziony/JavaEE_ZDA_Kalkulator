@@ -16,10 +16,10 @@ import kalkulator.Kalkulator.Mat;
 public class OknoKalkulatora extends JFrame {
 	
 	private Kalkulator poprzedniaLiczba = new Kalkulator();
-	private String aktualnaLiczba = "";
+	private String aktualnaLiczba = "0";
 	private float aktualnyWynik = 0;
-	private boolean czyJuzPoliczono;		// konieczne dla obslugi powtarzania dzialania po wybraniu " = "
-	private boolean czyNoweObliczenia;
+	private boolean czyJuzPoliczono;			// do obslugi powtarzania ostatniego dzialania po wybraniu " = "
+	private boolean czyWprowadzicNowaLiczbe;	// informuje, gdy nacisniety zostal znak "=" i chcemy wprowadzac nowa liczbe
 	
 	public OknoKalkulatora(){
 	
@@ -39,46 +39,54 @@ public class OknoKalkulatora extends JFrame {
 		cyfry.setLayout(new GridLayout(4,3));
 		dzialania.setLayout(new GridLayout(5,0));
 		
+		// ----- Obsluga przyciskow z dzialaniami ----
 		
 		JButton znakDodawania = new JButton("+");
 		znakDodawania.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent e){
-				if(aktualnaLiczba.equals("")) return;
-				if (czyJuzPoliczono) {aktualnaLiczba = "0";}
-				poprzedniaLiczba.setLiczba(poprzedniaLiczba.oblicz(Float.parseFloat(aktualnaLiczba)));
-				aktualnaLiczba ="";
 				poprzedniaLiczba.setDzialanie(Mat.Dodawanie);
+				aktualnyWynik = poprzedniaLiczba.oblicz(Float.parseFloat(aktualnaLiczba));
+				poprzedniaLiczba.setLiczba(aktualnyWynik);
+				aktualnaLiczba = "0";
+				czyWprowadzicNowaLiczbe = false;	// mamy wynik, ale chcemy do niego jeszcze cos dodac (nie skasuj poprzedniej liczby)
 				System.out.println(" + ");
-				czyJuzPoliczono = false;
-				znakDodawania.setEnabled(false);
 			}
 		});
 		JButton znakOdejmowania = new JButton("-");
 		JButton znakMnozenia = new JButton("*");
 		JButton znakDzielenia = new JButton("/");
+		
 		JButton znakWyniku = new JButton("=");
 		znakWyniku.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent event){
-				if(aktualnaLiczba.equals("")) { aktualnaLiczba = "0";};
-				aktualnyWynik = poprzedniaLiczba.oblicz(Float.parseFloat(aktualnaLiczba));		
+				aktualnyWynik = poprzedniaLiczba.oblicz(Float.parseFloat(aktualnaLiczba));
 				poprzedniaLiczba.setLiczba(aktualnyWynik);
-				if (poprzedniaLiczba.getDzialanie() != null) {czyJuzPoliczono = true;}
-				System.out.println("\nWynik = " + aktualnyWynik + "  (poprzed = " + poprzedniaLiczba.getLiczba() + ", aktual = " + aktualnaLiczba +")");
-				znakDodawania.setEnabled(true);
+				aktualnaLiczba = "0";			// zeby mozna bylo wpisac nowa liczbe
+				czyWprowadzicNowaLiczbe = true;		// mamy wynik, mozna wykonywac nowe obliczenia (skasuj poprzednia liczbe)
+				System.out.println("\nWynik = " + aktualnyWynik);
 			}
 		});
 		JButton znakKasuj = new JButton("C");
 		znakKasuj.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent event){
-				aktualnaLiczba ="";
+				aktualnaLiczba ="0";
+				poprzedniaLiczba.setLiczba(0);
+				aktualnyWynik = 0;
+				poprzedniaLiczba.setDzialanie(null);
+				System.out.println("- clear -");
 			}
 		});
 		
+		// ----- Obsluga przyciskow z cyframi ----
 		
 		ActionListener utworzLiczbe = new ActionListener(){
-			public void actionPerformed (ActionEvent e){
-				System.out.print(e.getActionCommand());
-				aktualnaLiczba += e.getActionCommand();
+			public void actionPerformed (ActionEvent event){
+				if (czyWprowadzicNowaLiczbe){
+					poprzedniaLiczba.setLiczba(0);
+					czyWprowadzicNowaLiczbe = false;
+				}
+				aktualnaLiczba += event.getActionCommand();
+				System.out.println("a="+aktualnaLiczba+ "  p="+poprzedniaLiczba.getLiczba());
 			}
 		};
 		
