@@ -17,73 +17,181 @@ public class OknoKalkulatora extends JFrame {
 	
 	private Kalkulator poprzedniaLiczba = new Kalkulator();	
 	private String aktualnaLiczba = "0";
-	private float aktualnyWynik = 0;
+	private double aktualnyWynik = 0;
+	private boolean czyWykonacObliczenia;		// informuje czy ma zostac wykonane wybrane dzialanie matematyczne (czy sa juz dwie liczby do obliczen)
 	private boolean czyJuzPoliczono;			// do obslugi powtarzania ostatniego dzialania po wybraniu " = "
+	private boolean czyNastopilaZmianaDzialania;
+	private boolean czyJestAktualnaLiczba;		// czy aktualna liczba zostala wprowadzona
 	private boolean czyRozpoczacNoweObliczenia;	// gdy otrzymamy 'wynik' dzialania (nacisniety zostal znak "="), mozemy uzyc 'wyniku' aby kontunuowac obliczenia (wartosc: FALSE) 
 												// albo wprowadzic nowa liczby dla nowych obliczen (wartosc: TRUE)
 	
 	public OknoKalkulatora(){
 	
+		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);		// jak ma byc zamkniete okno po kliknieciu "x" 
+		setTitle("Kalkulator");
+				
 		JPanel kalkulator = new JPanel();
+		JPanel znakPlusWyswietlacz = new JPanel();
+		JPanel znak = new JPanel();
 		JPanel wyswietlacz = new JPanel();
-		JPanel cyfryDzialania = new JPanel();
+		JPanel cyfryPlusDzialania = new JPanel();
 		JPanel cyfry = new JPanel();
 		JPanel dzialania = new JPanel();
 		
-		kalkulator.add(wyswietlacz);
-		kalkulator.add(cyfryDzialania);
-		cyfryDzialania.add(cyfry);
-		cyfryDzialania.add(dzialania);
+		kalkulator.add(znakPlusWyswietlacz);
+		kalkulator.add(cyfryPlusDzialania);
+		znakPlusWyswietlacz.add(znak);
+		znakPlusWyswietlacz.add(wyswietlacz);
+		cyfryPlusDzialania.add(cyfry);
+		cyfryPlusDzialania.add(dzialania);
 				
 		kalkulator.setLayout(new BoxLayout(kalkulator,BoxLayout.PAGE_AXIS ));
-		cyfryDzialania.setLayout(new BoxLayout(cyfryDzialania, BoxLayout.LINE_AXIS));
+		znakPlusWyswietlacz.setLayout(new BoxLayout(znakPlusWyswietlacz, BoxLayout.LINE_AXIS));
+		cyfryPlusDzialania.setLayout(new BoxLayout(cyfryPlusDzialania, BoxLayout.LINE_AXIS));
 		cyfry.setLayout(new GridLayout(4,3));
 		dzialania.setLayout(new GridLayout(5,0));
 		
 		// ----- Obsluga wyswietlacza wyniku ----
 		
-		JTextField wyswietlaczKalkulatora = new JTextField(15);
+		JTextField wyswietlaczKalkulatora = new JTextField(13);
+		wyswietlaczKalkulatora.setSize(200, 30);
 		wyswietlaczKalkulatora.setHorizontalAlignment(JTextField.RIGHT);
 		wyswietlaczKalkulatora.setText(aktualnaLiczba);		
 		wyswietlaczKalkulatora.setEditable(false);	// nie mozna nic wpisac "recznie" na wyswietlacz kalkulatora (wyswietla on tylko podane liczby lub wynik)
+		
+		JTextField znakNaWyswietlaczu = new JTextField(1);
+		znakNaWyswietlaczu.setHorizontalAlignment(JTextField.CENTER);
+		znakNaWyswietlaczu.setEditable(false);
 		
 		// ----- Obsluga przyciskow z dzialaniami ----
 		
 		JButton znakDodawania = new JButton("+");
 		znakDodawania.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent e){
-				poprzedniaLiczba.setDzialanie(Mat.Dodawanie);
-				aktualnyWynik = poprzedniaLiczba.oblicz(Float.parseFloat(aktualnaLiczba));
+				// oblicza poprzednie dzialanie, gdy zmieniono znak (gdy wykonujemy oblicznia, ale nie wyswietlono jeszcze wyniku znakiem "=")
+				if((poprzedniaLiczba.getDzialanie() != Mat.Dodawanie) && (poprzedniaLiczba.getDzialanie() != null)){ 	
+					poprzedniaLiczba.setLiczba(poprzedniaLiczba.oblicz(Double.parseDouble(aktualnaLiczba),czyJestAktualnaLiczba)); 
+					czyNastopilaZmianaDzialania = true; } 
+				poprzedniaLiczba.setDzialanie(Mat.Dodawanie);	// ustawiamy działanie na "Dodawanie"
+				// jesli nie ma przeszkod do wykonania obliczen (jest aktualna i poprzednia), wykonaj dodawanie
+				if(czyWykonacObliczenia) {aktualnyWynik = poprzedniaLiczba.oblicz(Double.parseDouble(aktualnaLiczba),czyJestAktualnaLiczba);}	
+				// nic nie obliczaj jesli pierwszy raz nacisnieto znak "+" (mamy aktualna liczbe, wiec zapisz aktualna jako poprzednia)
+				if(!czyWykonacObliczenia) { 	
+					aktualnyWynik = Double.parseDouble(aktualnaLiczba);
+					czyWykonacObliczenia = true; }	
+				// kiedy wybrano inne dzialanie (przed wykonaniem poprzedniego znakiem "="), nie ma aktualnej, do wyniku wstaw poprzednia
+				if (czyNastopilaZmianaDzialania){ aktualnyWynik = poprzedniaLiczba.getLiczba(); czyNastopilaZmianaDzialania = false;}	
 				poprzedniaLiczba.setLiczba(aktualnyWynik);
+				czyJestAktualnaLiczba = false;		// usuwamy aktualna liczbe
 				aktualnaLiczba = "0";				// zeby mozna bylo wpisac nowa liczbe
-				czyRozpoczacNoweObliczenia = false;	// mamy wynik, ale chcemy do niego jeszcze cos dodac (przy wprowadzaniu nowej liczby nie skasuj poprzedniej)
-				System.out.println(" + ");
+				czyRozpoczacNoweObliczenia = false;	// mamy wynik, ale chcemy z nim jeszcze cos zrobic (przy wprowadzaniu nowej liczby nie skasuj poprzedniej)
+				znakNaWyswietlaczu.setText("+");
+				System.out.println(" + \t a="+aktualnaLiczba + ", p=" + poprzedniaLiczba.getLiczba() + ", w=" + aktualnyWynik + "   dzial=" + poprzedniaLiczba.getDzialanie().name());
 			}
 		});
 		JButton znakOdejmowania = new JButton("-");
+		znakOdejmowania.addActionListener(new ActionListener(){
+			public void actionPerformed (ActionEvent event){
+				// oblicza poprzednie dzialanie, gdy zmieniono znak (gdy wykonujemy oblicznia, ale nie wyswietlono jeszcze wyniku znakiem "=")
+				if((poprzedniaLiczba.getDzialanie() != Mat.Odejmowanie) && (poprzedniaLiczba.getDzialanie() != null)){ 	
+					poprzedniaLiczba.setLiczba(poprzedniaLiczba.oblicz(Double.parseDouble(aktualnaLiczba),czyJestAktualnaLiczba)); 
+					czyNastopilaZmianaDzialania = true; } 
+				poprzedniaLiczba.setDzialanie(Mat.Odejmowanie);	// ustawiamy działanie na "Odejmowanie"
+				// jesli nie ma przeszkod do wykonania obliczen (jest aktualna i poprzednia), wykonaj odejmowanie
+				if(czyWykonacObliczenia) {aktualnyWynik = poprzedniaLiczba.oblicz(Double.parseDouble(aktualnaLiczba),czyJestAktualnaLiczba);}
+				// nic nie obliczaj jesli pierwszy raz nacisnieto znak "-" (mamy aktualna liczbe, wiec zapisz aktualna jako poprzednia)
+				if(!czyWykonacObliczenia) { 
+					aktualnyWynik = Double.parseDouble(aktualnaLiczba);
+					czyWykonacObliczenia = true; }	
+				// kiedy wybrano inne dzialanie (przed wykonaniem poprzedniego znakiem "="), nie ma aktualnej, do wyniku wstaw poprzednia
+				if (czyNastopilaZmianaDzialania){ aktualnyWynik = poprzedniaLiczba.getLiczba(); czyNastopilaZmianaDzialania = false;}	
+				poprzedniaLiczba.setLiczba(aktualnyWynik);
+				czyJestAktualnaLiczba = false;		// usuwamy aktualna liczbe
+				aktualnaLiczba = "0";				// zeby mozna bylo wpisac nowa liczbe
+				czyRozpoczacNoweObliczenia = false;	// mamy wynik, ale chcemy z nim jeszcze cos zrobic (przy wprowadzaniu nowej liczby nie skasuj poprzedniej)
+				znakNaWyswietlaczu.setText("-");
+				System.out.println(" - \t a="+aktualnaLiczba + ", p=" + poprzedniaLiczba.getLiczba() + ", w=" + aktualnyWynik + "   dzial=" + poprzedniaLiczba.getDzialanie().name());
+			}
+		});
 		JButton znakMnozenia = new JButton("*");
+		znakMnozenia.addActionListener(new ActionListener(){
+			public void actionPerformed(ActionEvent event){
+				// oblicza poprzednie dzialanie, gdy zmieniono znak (gdy wykonujemy oblicznia, ale nie wyswietlono jeszcze wyniku znakiem "=")
+				if((poprzedniaLiczba.getDzialanie() != Mat.Mnozenie) && (poprzedniaLiczba.getDzialanie() != null)){ 	
+					poprzedniaLiczba.setLiczba(poprzedniaLiczba.oblicz(Double.parseDouble(aktualnaLiczba),czyJestAktualnaLiczba)); 
+					czyNastopilaZmianaDzialania = true; } 
+				poprzedniaLiczba.setDzialanie(Mat.Mnozenie);	// ustawiamy działanie na "Mnozenie"
+				// jesli nie ma przeszkod do wykonania obliczen (jest aktualna i poprzednia), wykonaj mnozenie
+				if(czyWykonacObliczenia) {aktualnyWynik = poprzedniaLiczba.oblicz(Double.parseDouble(aktualnaLiczba),czyJestAktualnaLiczba);}	
+				// nic nie obliczaj jesli pierwszy raz nacisnieto znak "*" (mamy aktualna liczbe, wiec zapisz aktualna jako poprzednia)
+				if(!czyWykonacObliczenia) { 	
+					aktualnyWynik = Double.parseDouble(aktualnaLiczba);
+					czyWykonacObliczenia = true; }	
+				// kiedy wybrano inne dzialanie (przed wykonaniem poprzedniego znakiem "="), nie ma aktualnej, do wyniku wstaw poprzednia
+				if (czyNastopilaZmianaDzialania){ aktualnyWynik = poprzedniaLiczba.getLiczba(); czyNastopilaZmianaDzialania = false;}	
+				poprzedniaLiczba.setLiczba(aktualnyWynik);
+				czyJestAktualnaLiczba = false;		// usuwamy aktualna
+				aktualnaLiczba = "0";				// zeby mozna bylo wpisac nowa liczbe
+				czyRozpoczacNoweObliczenia = false;	// mamy wynik, ale chcemy z nim jeszcze cos zrobic (przy wprowadzaniu nowej liczby nie skasuj poprzedniej)
+				znakNaWyswietlaczu.setText("*");
+				System.out.println(" * \t a="+aktualnaLiczba + ", p=" + poprzedniaLiczba.getLiczba() + ", w=" + aktualnyWynik + "   dzial=" + poprzedniaLiczba.getDzialanie().name());
+			}
+		});
 		JButton znakDzielenia = new JButton("/");
+		znakDzielenia.addActionListener(new ActionListener(){
+			public void actionPerformed(ActionEvent event){
+				// oblicza poprzednie dzialanie, gdy zmieniono znak (gdy wykonujemy oblicznia, ale nie wyswietlono jeszcze wyniku znakiem "=")
+				if((poprzedniaLiczba.getDzialanie() != Mat.Dzielenie) && (poprzedniaLiczba.getDzialanie() != null)){ 	
+					poprzedniaLiczba.setLiczba(poprzedniaLiczba.oblicz(Double.parseDouble(aktualnaLiczba),czyJestAktualnaLiczba)); 
+					czyNastopilaZmianaDzialania = true; } 
+				poprzedniaLiczba.setDzialanie(Mat.Dzielenie);	// ustawiamy działanie na "Dzielenie"
+				// jesli nie ma przeszkod do wykonania obliczen (jest aktualna i poprzednia), wykonaj dzielenie
+				if(czyWykonacObliczenia) {aktualnyWynik = poprzedniaLiczba.oblicz(Double.parseDouble(aktualnaLiczba),czyJestAktualnaLiczba);}
+				// nic nie obliczaj jesli pierwszy raz nacisnieto znak "/" (mamy aktualna liczbe, wiec zapisz aktualna jako poprzednia)
+				if(!czyWykonacObliczenia) { 	
+					aktualnyWynik = Double.parseDouble(aktualnaLiczba);
+					czyWykonacObliczenia = true; }
+				// kiedy wybrano inne dzialanie (przed wykonaniem poprzedniego znakiem "="), nie ma aktualnej, do wyniku wstaw poprzednia
+				if (czyNastopilaZmianaDzialania){ aktualnyWynik = poprzedniaLiczba.getLiczba(); czyNastopilaZmianaDzialania = false;}	
+				poprzedniaLiczba.setLiczba(aktualnyWynik);
+				czyJestAktualnaLiczba = false;		// usuwamy aktualna liczbe
+				aktualnaLiczba = "0";				// zeby mozna bylo wpisac nowa liczbe
+				czyRozpoczacNoweObliczenia = false;	// mamy wynik, ale chcemy z nim jeszcze cos zrobic (przy wprowadzaniu nowej liczby nie skasuj poprzedniej)
+				znakNaWyswietlaczu.setText("/");
+				System.out.println(" / \t a="+aktualnaLiczba + ", p=" + poprzedniaLiczba.getLiczba() + ", w=" + aktualnyWynik + "   dzial=" + poprzedniaLiczba.getDzialanie().name());
+			}
+		});
 		
 		JButton znakWyniku = new JButton("=");
 		znakWyniku.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent event){
-				aktualnyWynik = poprzedniaLiczba.oblicz(Float.parseFloat(aktualnaLiczba));
+				// oblicz wynik wybranego dzialania
+				aktualnyWynik = poprzedniaLiczba.oblicz(Double.parseDouble(aktualnaLiczba),czyJestAktualnaLiczba);
 				poprzedniaLiczba.setLiczba(aktualnyWynik);
+				czyJestAktualnaLiczba = false;		// usuwamy aktualna liczbe
 				aktualnaLiczba = "0";				// zeby mozna bylo wpisac nowa liczbe
 				czyRozpoczacNoweObliczenia = true;		// mamy wynik, mozna wykonywac nowe obliczenia (przy wprowadzaniu nowej liczby skasuj poprzednia z pamieci)
-				wyswietlaczKalkulatora.setText(wyswietlPoprawnieWynikFloat(aktualnyWynik));		// wyswietla aktualny wynik na wyswietlaczu
-				System.out.println("\nWynik = " + aktualnyWynik);
+				wyswietlaczKalkulatora.setText(wyswietlPoprawnieWynikDouble(aktualnyWynik));		// wyswietla aktualny wynik na wyswietlaczu
+				znakNaWyswietlaczu.setText("=");
+				czyWykonacObliczenia = true;
+				System.out.print("=");
+				wyswietlAktualneWartosciZmiennych();
 			}
 		});
 		JButton znakKasuj = new JButton("C");
 		znakKasuj.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent event){
+				// usuwamy wszystkie liczby z pamieci oraz wybor dzialania
+				czyJestAktualnaLiczba = false;
 				aktualnaLiczba ="0";
 				poprzedniaLiczba.setLiczba(0);
 				aktualnyWynik = 0;
 				poprzedniaLiczba.setDzialanie(null);
+				czyWykonacObliczenia = false;		// po wybraniu dzialania nic nie obliczaj (nie bedzie drugiej liczby, bo zostala wlasnie usunieta z pamieci)
 				wyswietlaczKalkulatora.setText("0");
-				System.out.println("- clear -");
+				znakNaWyswietlaczu.setText("");
+				System.out.print("-clear-");
+				wyswietlAktualneWartosciZmiennych();
 			}
 		});
 		
@@ -91,15 +199,20 @@ public class OknoKalkulatora extends JFrame {
 		
 		ActionListener utworzLiczbe = new ActionListener(){
 			public void actionPerformed (ActionEvent event){
-				if (czyRozpoczacNoweObliczenia){			// beda wykonywane nowe obliczenia (wyczysc poprzednia liczba oraz dzialanie)
+				// beda wykonywane nowe obliczenia (wyczysc poprzednia liczba oraz dzialanie)
+				if (czyRozpoczacNoweObliczenia){			
 					poprzedniaLiczba.setLiczba(0);
 					poprzedniaLiczba.setDzialanie(null);
 					czyRozpoczacNoweObliczenia = false;
+					czyWykonacObliczenia = false;
+					aktualnaLiczba = "0";
+					czyJestAktualnaLiczba = false;
 				}
+				czyJestAktualnaLiczba = true;
 				aktualnaLiczba += event.getActionCommand();
 				aktualnaLiczba = wyswietlPoprawnieLiczbeString(aktualnaLiczba);		// usuwa niepotrzebne "0" z poczatku stringu
 				wyswietlaczKalkulatora.setText(aktualnaLiczba);		// wyswietla wpisywana liczbe na wyswietlaczu kalkulatora
-				System.out.println("a="+aktualnaLiczba+ "  p="+poprzedniaLiczba.getLiczba());
+				wyswietlAktualneWartosciZmiennych();
 			}
 		};
 		
@@ -127,14 +240,18 @@ public class OknoKalkulatora extends JFrame {
 		JButton znakPrzecinek = new JButton(".");
 		znakPrzecinek.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent event){
+				// jesli nie ma "." w stringu aktualna to go wstaw, jesli juz jest to nie pozwol na wstawienie kolejnego
 				if (!aktualnaLiczba.contains(".")){
 					aktualnaLiczba += event.getActionCommand();
-					wyswietlaczKalkulatora.setText((aktualnaLiczba));	// wyswietli aktualna liczbe na wyswietlaczu podczas wpisywania
+					wyswietlaczKalkulatora.setText((aktualnaLiczba));
+					czyJestAktualnaLiczba = true;
+					czyRozpoczacNoweObliczenia = false;
 				}
 			}
 		});
 		
 		wyswietlacz.add(wyswietlaczKalkulatora);
+		znak.add(znakNaWyswietlaczu);
 		
 		cyfry.add(cyfra1);
 		cyfry.add(cyfra2);
@@ -170,18 +287,24 @@ public class OknoKalkulatora extends JFrame {
 				liczbaString = liczbaString.substring(1);
 			}
 		}
-		System.out.println(liczbaString);
 		return liczbaString;
 	}
 	// pomocnicza metoda do poprawnego wyswietlania wyniku typu float (dla calkowitych liczba nie wyswietla ".0", np 35.0 -> 35) 
-		private String wyswietlPoprawnieWynikFloat (float wynikFloat){
+		private String wyswietlPoprawnieWynikDouble (double wynikDouble){
 			
-			String wynikString = "" + wynikFloat;
+			String wynikString = "" + wynikDouble;
 			if (wynikString.substring(wynikString.length()-1).equals("0")){
 				wynikString = wynikString.substring(0, wynikString.length()-2);
 			}
-			System.out.println(wynikString);
 			return wynikString;
 		}
+	// pomocnicza metoda do wyswietlania aktualnych wartosc zmiennych
+	private void wyswietlAktualneWartosciZmiennych(){
+		String aktualneWartosci = "\t a="+aktualnaLiczba + ", p=" + poprzedniaLiczba.getLiczba() + ", w=" + aktualnyWynik + "   dzial=";
+		if (poprzedniaLiczba.getDzialanie() == null) {aktualneWartosci += "null";}
+		else {aktualneWartosci += poprzedniaLiczba.getDzialanie().name();}
+				
+		System.out.println(aktualneWartosci);
+	}
 
 }
