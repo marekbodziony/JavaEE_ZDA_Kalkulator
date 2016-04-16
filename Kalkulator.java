@@ -15,11 +15,19 @@ public class Kalkulator {
 		if (dzialanie == Mat.Dodawanie)		{return wynik = dodaj(liczba2);}
 		if (dzialanie == Mat.Odejmowanie) 	{return wynik = odejmij(liczba2);}
 		if ((dzialanie == Mat.Mnozenie) && czyJestLiczba2)	{return wynik = pomnoz(liczba2);}
+		// dzielenie z wylaczeniem wyjatku dzielenia przez "0"
 		if (dzialanie == Mat.Dzielenie && czyJestLiczba2)	{
-			if (liczba2 == 0) {System.out.println("Blad! Nie mozna dzielic przez \"0\""); return wynik = 666666f;}		// blad, nie mozna dzielic przez "0"
-			return wynik = podziel(liczba2);
+			try{
+				wynik = podziel(liczba2);
+			}
+			catch (DzieleniePrezZeroException wyjatek){
+				System.out.println(wyjatek.getMessage()); 
+			}
+			return wynik;
 		}
-		if (dzialanie == null) { return wynik = dodaj(liczba2);}	// gdy nie wybrano zadnego dzialania (zwraca poprzednia lub aktualna - ktora bedzie niezerowa)
+		// gdy nie wybrano zadnego dzialania (mamy w pamieci poprzednia lub aktualna) zwracam te niezerowa liczbe
+		if (dzialanie == null) { return wynik = dodaj(liczba2);}	
+		
 		return wynik;
 	}
 	
@@ -27,7 +35,11 @@ public class Kalkulator {
 	private double dodaj (double liczba2){ return liczba1 + liczba2; }
 	private double odejmij (double liczba2){ return liczba1 - liczba2; }
 	private double pomnoz (double liczba2){ return liczba1 * liczba2; }
-	private double podziel (double liczba2){ return liczba1 / liczba2; }
+	
+	private double podziel (double liczba2) throws DzieleniePrezZeroException { 
+		// jesli dzielenie przez "0" zwroc wyjatek DzieleniePrezZeroException
+		if (liczba2 == 0) { throw new DzieleniePrezZeroException();}  
+		return liczba1 / liczba2; }		
 	
 	// getters, setters
 	public double getLiczba(){return liczba1;}
@@ -37,4 +49,11 @@ public class Kalkulator {
 	
 	// typ wyliczeniowy - dostepne dzialania
 	public enum Mat {Dodawanie, Odejmowanie, Mnozenie, Dzielenie};
+	
+	//
+	public class DzieleniePrezZeroException extends Exception{
+		public DzieleniePrezZeroException(){
+			super("Blad! Proba dzielenia przez 0");
+		}
+	}
 }
